@@ -13,16 +13,18 @@ import {
   Connection,
   NodeChange,
   EdgeChange,
-  ReactFlowInstance,
   OnConnectEndParams,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
+// Define node types
+type NodeType = "prompt" | "response";
+
 const initialNodes: Node[] = [
   {
     id: "0",
-    type: "input",
-    data: { label: "Node" },
+    type: "prompt",
+    data: { label: "Start Prompt" },
     position: { x: 0, y: 50 },
   },
 ];
@@ -32,23 +34,43 @@ const getId = () => `${id++}`;
 
 const nodeOrigin: [number, number] = [0.5, 0];
 
+// Node type mapping
+const getOppositeNodeType = (nodeType: NodeType): NodeType => {
+  return nodeType === "prompt" ? "response" : "prompt";
+};
+
 const AddNodeOnEdgeDrop = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { screenToFlowPosition } = useReactFlow();
 
+  // Handle direct connections between nodes
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [],
   );
 
+  // Handle dropping edges to create new nodes
   const onConnectEnd = useCallback(
-    (event: React.MouseEvent | React.TouchEvent, connectionState: OnConnectEndParams) => {
+    (
+      event: React.MouseEvent | React.TouchEvent,
+      connectionState: OnConnectEndParams,
+    ) => {
       if (!connectionState.isValid) {
         const id = getId();
         const { clientX, clientY } =
           "changedTouches" in event ? event.changedTouches[0] : event;
+
+        // Determine node type based on source node
+        let newNodeType: NodeType = "response"; // default fallback
+
+        if (connectionState.fromNode) {
+          // Get the opposite node type
+          newNodeType = getOppositeNodeType(
+            connectionState.fromNode.type as NodeType,
+          );
+        }
 
         const newNode: Node = {
           id,
@@ -56,7 +78,11 @@ const AddNodeOnEdgeDrop = () => {
             x: clientX,
             y: clientY,
           }),
-          data: { label: `Node ${id}` },
+          data: {
+            label: newNodeType === "prompt" ? "New Prompt" : "Response",
+            type: newNodeType,
+          },
+          type: newNodeType,
           origin: nodeOrigin,
         };
 
