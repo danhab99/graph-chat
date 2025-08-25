@@ -39,6 +39,62 @@ const getOppositeNodeType = (nodeType: NodeType): NodeType => {
   return nodeType === "prompt" ? "response" : "prompt";
 };
 
+// Check if adding an edge would create a cycle
+const wouldCreateCycle = (
+  edges: Edge[],
+  sourceId: string,
+  targetId: string,
+): boolean => {
+  // Build adjacency list for graph traversal
+  const adjacencyList: Record<string, string[]> = {};
+
+  // Initialize adjacency list with existing edges
+  edges.forEach((edge) => {
+    if (!adjacencyList[edge.source]) {
+      adjacencyList[edge.source] = [];
+    }
+    adjacencyList[edge.source].push(edge.target);
+  });
+
+  // Add the new edge temporarily for cycle detection
+  if (!adjacencyList[sourceId]) {
+    adjacencyList[sourceId] = [];
+  }
+  adjacencyList[sourceId].push(targetId);
+
+  // Check for cycles using DFS
+  const visited: Set<string> = new Set();
+  const recursionStack: Set<string> = new Set();
+
+  const hasCycle = (nodeId: string): boolean => {
+    if (!visited.has(nodeId)) {
+      visited.add(nodeId);
+      recursionStack.add(nodeId);
+
+      const neighbors = adjacencyList[nodeId] || [];
+      for (const neighbor of neighbors) {
+        if (!visited.has(neighbor) && hasCycle(neighbor)) {
+          return true;
+        } else if (recursionStack.has(neighbor)) {
+          return true;
+        }
+      }
+    }
+    recursionStack.delete(nodeId);
+    return false;
+  };
+
+  // Check if the new edge creates a cycle
+  const result = hasCycle(targetId);
+
+  // Clean up - remove the temporary edge
+  if (adjacencyList[sourceId]) {
+    adjacencyList[sourceId].pop();
+  }
+
+  return result;
+};
+
 const AddNodeOnEdgeDrop = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -47,8 +103,17 @@ const AddNodeOnEdgeDrop = () => {
 
   // Handle direct connections between nodes
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [],
+    (params: Connection) => {
+      // Check if this connection would create a cycle
+      if (params.source && params.target) {
+        if (wouldCreateCycle(edges, params.source, params.target)) {
+          console.warn("Connection would create a cycle - rejected");
+          return;
+        }
+      }
+      setEdges((eds) => addEdge(params, eds));
+    },
+    [edges],
   );
 
   // Handle dropping edges to create new nodes
@@ -58,7 +123,7 @@ const AddNodeOnEdgeDrop = () => {
       connectionState: OnConnectEndParams,
     ) => {
       if (!connectionState.isValid) {
-        const id = getId();
+        const nodeId = getId();
         const { clientX, clientY } =
           "changedTouches" in event ? event.changedTouches[0] : event;
 
@@ -73,7 +138,7 @@ const AddNodeOnEdgeDrop = () => {
         }
 
         const newNode: Node = {
-          id,
+          id: nodeId,
           position: screenToFlowPosition({
             x: clientX,
             y: clientY,
@@ -89,17 +154,24 @@ const AddNodeOnEdgeDrop = () => {
         setNodes((nds) => nds.concat(newNode));
 
         if (connectionState.fromNode) {
-          setEdges((eds) =>
-            eds.concat({
-              id: `${connectionState.fromNode.id}-${id}`,
-              source: connectionState.fromNode.id,
-              target: id,
-            }),
-          );
+          // Check if this connection would create a cycle
+          if (!wouldCreateCycle(edges, connectionState.fromNode.id, nodeId)) {
+            setEdges((eds) =>
+              eds.concat({
+                id: `${connectionState.fromNode.id}-${nodeId}`,
+                source: connectionState.fromNode.id,
+                target: nodeId,
+              }),
+            );
+          } else {
+            console.warn("Connection would create a cycle - rejected");
+            // Remove the newly created node since we're rejecting the edge
+            setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+          }
         }
       }
     },
-    [screenToFlowPosition],
+    [screenToFlowPosition, edges],
   );
 
   return (
