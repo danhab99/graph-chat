@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   Background,
   ReactFlow,
@@ -100,6 +100,26 @@ const AddNodeOnEdgeDrop = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { screenToFlowPosition } = useReactFlow();
+
+  useEffect(() => {
+    if (!nodes) {
+      const s = localStorage.getItem("nodes")
+      if (s) {
+        setNodes(JSON.parse(s))
+      }
+    } else {
+      localStorage.setItem("nodes", JSON.stringify(nodes))
+    }
+
+    if (!edges) {
+      const s = localStorage.getItem("edges")
+      if (s) {
+        setEdges(JSON.parse(s))
+      }
+    } else {
+      localStorage.setItem("edges", JSON.stringify(edges))
+    }
+  }, [nodes, edges]);
 
   // Handle direct connections between nodes
   const onConnect = useCallback(
