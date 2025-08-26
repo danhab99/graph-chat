@@ -20,9 +20,7 @@ import "@xyflow/react/dist/style.css";
 import { generateNextMessage } from "@/lib/ollama";
 import { collectAncestors } from "@/lib/collect_chat";
 import { getOppositeNodeType, NodeType, wouldCreateCycle } from "@/lib/node";
-
-// Define node types
-const initialNodes: Node<any, NodeType>[] = [];
+import { InputModalProvider } from "@/components/InputModal";
 
 let id = 1;
 const getId = () => `${id++}`;
@@ -35,9 +33,6 @@ const AddNodeOnEdgeDrop = () => {
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const { screenToFlowPosition } = useReactFlow();
-  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
-  const [editText, setEditText] = useState("");
-
   const [loaded, setLoaded] = useState(false);
 
   const setNodeLabel = (nodeId: Node["id"], label: string) =>
@@ -151,10 +146,6 @@ const AddNodeOnEdgeDrop = () => {
     const node = nodes.find((n) => n.id === nodeId);
     if (node) {
       switch (node.type) {
-        case "prompt":
-          setEditingNodeId(nodeId);
-          setEditText(node.data.label || "");
-          break;
         case "response":
           setNodes((prev) =>
             prev.map((node) =>
@@ -172,87 +163,39 @@ const AddNodeOnEdgeDrop = () => {
     }
   };
 
-  // Save edited text
-  const saveEdit = () => {
-    if (editingNodeId) {
-      setNodes((prev) =>
-        prev.map((node) =>
-          node.id === editingNodeId
-            ? { ...node, data: { ...node.data, label: editText } }
-            : node,
-        ),
-      );
-      setEditingNodeId(null);
-      setEditText("");
-    }
-  };
-
-  // Close modal without saving
-  const cancelEdit = () => {
-    setEditingNodeId(null);
-    setEditText("");
-  };
-
   return (
-    <div className="wrapper w-screen h-screen" ref={reactFlowWrapper}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange as (changes: NodeChange[]) => void}
-        onEdgesChange={onEdgesChange as (changes: EdgeChange[]) => void}
-        onConnect={onConnect}
-        onConnectEnd={onConnectEnd}
-        fitView
-        fitViewOptions={{ padding: 2 }}
-        nodeOrigin={nodeOrigin}
-        onNodeClick={(event, node) => handleNodeClick(node.id)}
-        onEdgeClick={(evt, edge) =>
-          setEdges((prev) => [...prev.filter((x) => x.id !== edge.id)])
-        }
-        deleteKeyCode={["Delete", "Backspace"]}
-        onNodesDelete={(nodes) => {
-          const ids = nodes.map((x) => x.id);
-          setNodes((prev) => prev.filter((x) => !ids.includes(x.id)));
-          setEdges((prev) =>
-            prev.filter(
-              (x) => !ids.includes(x.target) || !ids.includes(x.source),
-            ),
-          );
-        }}
-      >
-        <Background />
-        <Controls />
-      </ReactFlow>
-
-      {/* Edit Modal */}
-      {editingNodeId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-96">
-            <h3 className="text-lg font-semibold mb-4">Edit Prompt</h3>
-            <textarea
-              className="w-full h-32 p-2 border border-gray-300 rounded-md resize-none"
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              placeholder="Enter your prompt text here..."
-            />
-            <div className="flex justify-end space-x-3 mt-4">
-              <button
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                onClick={cancelEdit}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                onClick={saveEdit}
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    <InputModalProvider>
+      <div className="wrapper w-screen h-screen" ref={reactFlowWrapper}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange as (changes: NodeChange[]) => void}
+          onEdgesChange={onEdgesChange as (changes: EdgeChange[]) => void}
+          onConnect={onConnect}
+          onConnectEnd={onConnectEnd}
+          fitView
+          fitViewOptions={{ padding: 2 }}
+          nodeOrigin={nodeOrigin}
+          onNodeClick={(_event, node) => handleNodeClick(node.id)}
+          onEdgeClick={(_event, edge) =>
+            setEdges((prev) => [...prev.filter((x) => x.id !== edge.id)])
+          }
+          deleteKeyCode={["Delete", "Backspace"]}
+          onNodesDelete={(nodes) => {
+            const ids = nodes.map((x) => x.id);
+            setNodes((prev) => prev.filter((x) => !ids.includes(x.id)));
+            setEdges((prev) =>
+              prev.filter(
+                (x) => !ids.includes(x.target) || !ids.includes(x.source),
+              ),
+            );
+          }}
+        >
+          <Background />
+          <Controls />
+        </ReactFlow>
+      </div>
+    </InputModalProvider>
   );
 };
 
