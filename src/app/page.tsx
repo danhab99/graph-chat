@@ -40,6 +40,13 @@ const AddNodeOnEdgeDrop = () => {
 
   const [loaded, setLoaded] = useState(false);
 
+  const setNodeLabel = (nodeId: Node["id"], label: string) =>
+    setNodes((prev) =>
+      prev.map((node) =>
+        node.id === nodeId ? { ...node, data: { ...node.data, label } } : node,
+      ),
+    );
+
   useEffect(() => {
     if (nodes.length > 0) {
       localStorage.setItem("nodes", JSON.stringify(nodes));
@@ -66,7 +73,6 @@ const AddNodeOnEdgeDrop = () => {
     } else if (!loaded) {
       const s = localStorage.getItem("edges");
       if (s && s.length > 2) {
-        debugger;
         setEdges(JSON.parse(s));
       }
     }
@@ -157,16 +163,9 @@ const AddNodeOnEdgeDrop = () => {
                 : node,
             ),
           );
-
+          setNodeLabel(node.id, "thinking...");
           generateNextMessage(collectAncestors(nodeId, nodes, edges)).then(
-            (nextMsg) =>
-              setNodes((prev) =>
-                prev.map((node) =>
-                  node.id === nodeId
-                    ? { ...node, data: { ...node.data, label: nextMsg } } // WHY DOESN"T THIS WORK
-                    : node,
-                ),
-              ),
+            (nextMsg) => setNodeLabel(node.id, nextMsg),
           );
           break;
       }
@@ -210,6 +209,16 @@ const AddNodeOnEdgeDrop = () => {
         onEdgeClick={(evt, edge) =>
           setEdges((prev) => [...prev.filter((x) => x.id !== edge.id)])
         }
+        deleteKeyCode={["Delete", "Backspace"]}
+        onNodesDelete={(nodes) => {
+          const ids = nodes.map((x) => x.id);
+          setNodes((prev) => prev.filter((x) => !ids.includes(x.id)));
+          setEdges((prev) =>
+            prev.filter(
+              (x) => !ids.includes(x.target) || !ids.includes(x.source),
+            ),
+          );
+        }}
       >
         <Background />
         <Controls />
