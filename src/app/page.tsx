@@ -114,7 +114,7 @@ const AddNodeOnEdgeDrop = () => {
             y: clientY,
           }),
           data: {
-            label: newNodeType === "prompt" ? "New Prompt" : "Response",
+            label: newNodeType === "prompt" ? "Click to enter prompt" : "Response",
             type: newNodeType,
           },
           type: newNodeType,
