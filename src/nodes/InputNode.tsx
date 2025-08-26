@@ -1,6 +1,13 @@
-import { useSetThisNode } from "@/lib/node";
-import { Handle, Node, NodeProps, Position, useNodeConnections } from "@xyflow/react";
-import { ChangeEventHandler } from "react";
+import { useInput } from "@/components/InputModal";
+import {
+  Handle,
+  Node,
+  NodeProps,
+  NodeResizer,
+  Position,
+  useNodeConnections,
+} from "@xyflow/react";
+import { ChangeEventHandler, useState } from "react";
 
 type InputNodeData = Node<
   {
@@ -10,20 +17,22 @@ type InputNodeData = Node<
 >;
 
 export function InputNode(props: NodeProps<InputNodeData>) {
-  const set = useSetThisNode(props);
-
-  const handleChange: ChangeEventHandler<HTMLInputElement> = (e) =>
-    set((prev) => ({ ...prev, text: e.target.value }));
-
-  const connections = useNodeConnections({
-    handleType: "target",
-    handleId: "my-handle",
-  });
+  const input = useInput();
+  const [hovering, setHovering] = useState(false);
 
   return (
-    <div className="node">
-      <input value={props.data.text} onChange={handleChange} />
-      <Handle type="source" position={Position.Right} />
-    </div>
+    <>
+      <div
+        onClick={() => input(props.id)}
+        className="bg-yellow-200 rounded-lg h-full shadow-gray-300 shadow-md p-2"
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+      >
+        <p>{props.data.label}</p>
+        <NodeResizer isVisible={hovering} />
+        <Handle type="target" position={Position.Top} />
+        <Handle type="source" position={Position.Bottom} />
+      </div>
+    </>
   );
 }

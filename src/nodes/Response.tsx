@@ -1,16 +1,11 @@
-import { useSetThisNode } from "@/lib/node";
+import { collectAncestors } from "@/lib/collect_chat";
+import { generateNextMessage } from "@/lib/ollama";
 import {
-  getIncomers,
   Handle,
   Node,
   NodeProps,
+  NodeResizer,
   Position,
-  useEdges,
-  useEdgesState,
-  useNodeConnections,
-  useNodeId,
-  useNodes,
-  useNodesState,
   useReactFlow,
 } from "@xyflow/react";
 import { useEffect, useState } from "react";
@@ -25,48 +20,46 @@ type ResponseNodeData = Node<
 >;
 
 export function ResponseNode(props: NodeProps<ResponseNodeData>) {
-  const [loading, setLoading] = useState(false);
-  const set = useSetThisNode(props);
+  const { setNodes, getNodes, getEdges } = useReactFlow();
 
-  const [promptConnection] = useNodeConnections({
-    handleId: "prompt",
-  });
-  const [responseConnection] = useNodeConnections({
-    handleId: "response",
-  });
-
-  useEffect(() => {
-    setLoading(true);
-
-    (async () => {
-      const response: string = await processResponse(
-        props.data.system,
-        props.data.prompt,
+  const run = () => {
+    const setNodeLabel = (nodeId: Node["id"], label: string) =>
+      setNodes((prev) =>
+        prev.map((node) =>
+          node.id === nodeId
+            ? { ...node, data: { ...node.data, label } }
+            : node,
+        ),
       );
 
-      set((prev) => ({
-        ...prev,
-        response,
-      }));
+    setNodeLabel(props.id, "thinking...");
 
-      setLoading(false);
-    })();
-  }, [props]);
+    const nodes = getNodes();
+    const edges = getEdges();
 
-  const id = useNodeId();
-  const edges = useEdges();
+    generateNextMessage(collectAncestors(props.id, nodes as any, edges)).then(
+      (nextMsg) => setNodeLabel(props.id, nextMsg),
+    );
+  };
+
+  // AUTO RUN
+  useEffect(() => {
+    run();
+  }, []);
+
+  const [hovering, setHovering] = useState(false);
 
   return (
-    <div className="border border-solid border-black">
-      test
-      <Handle position={Position.Bottom} />
+    <div
+      className="bg-cyan-200 rounded-lg h-full shadow-gray-300 shadow-md p-2 overflow-y-auto"
+      onClick={() => run()}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
+      <NodeResizer isVisible={hovering} />
+      <p>{props.data.label}</p>
+      <Handle type="target" position={Position.Top} />
+      <Handle type="source" position={Position.Bottom} />
     </div>
   );
-}
-
-async function processResponse(
-  system: string,
-  prompt: string,
-): Promise<string> {
-  return "";
 }

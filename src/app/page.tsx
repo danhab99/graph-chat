@@ -21,6 +21,8 @@ import { generateNextMessage } from "@/lib/ollama";
 import { collectAncestors } from "@/lib/collect_chat";
 import { getOppositeNodeType, NodeType, wouldCreateCycle } from "@/lib/node";
 import { InputModalProvider } from "@/components/InputModal";
+import { InputNode } from "@/nodes/InputNode";
+import { ResponseNode } from "@/nodes/Response";
 
 let id = 1;
 const getId = () => `${id++}`;
@@ -189,6 +191,10 @@ const AddNodeOnEdgeDrop = () => {
                 (x) => !ids.includes(x.target) || !ids.includes(x.source),
               ),
             );
+          }}
+          nodeTypes={{
+            prompt: InputNode,
+            response: ResponseNode,
           }}
         >
           <Background />
