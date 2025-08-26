@@ -33,13 +33,22 @@ export function ResponseNode(props: NodeProps<ResponseNodeData>) {
         ),
       );
 
-    setNodeLabel(props.id, "thinking...");
+    let i = 0;
+    const interv = setInterval(() => {
+      let str = "   ";
+      str[i] = ".";
+      i = i > 3 ? i++ : 0;
+      setNodeLabel(props.id, `thinking${str}`);
+    }, 1000);
 
     const nodes = getNodes();
     const edges = getEdges();
 
     generateNextMessage(collectAncestors(props.id, nodes as any, edges)).then(
-      (nextMsg) => setNodeLabel(props.id, nextMsg),
+      (nextMsg) => {
+        clearInterval(interv);
+        setNodeLabel(props.id, nextMsg);
+      },
     );
   };
 
