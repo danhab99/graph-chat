@@ -92,5 +92,5 @@ export const collectAncestors = (
   }
 
   // Remove the target node itself and return in correct order (from closest to farthest)
-  return ancestors.filter(ancestor => ancestor.content !== "").reverse();
+  return ancestors.filter(ancestor => ancestor.content !== "").reverse().slice(0, -1);
 };

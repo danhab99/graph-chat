@@ -14,12 +14,15 @@ import {
   NodeChange,
   EdgeChange,
   OnConnectEndParams,
+  Controls,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { generateNextMessage } from "@/lib/ollama";
+import { collectAncestors } from "@/lib/collect_chat";
 
 // Define node types
 type NodeType = "prompt" | "response";
-const initialNodes: Node[] = [
+const initialNodes: Node<any, NodeType>[] = [
   {
     id: "0",
     type: "prompt",
@@ -182,17 +185,41 @@ const AddNodeOnEdgeDrop = () => {
   // Handle node click to open edit modal
   const handleNodeClick = (nodeId: string) => {
     const node = nodes.find((n) => n.id === nodeId);
-    if (node && node.type === "prompt") {
-      setEditingNodeId(nodeId);
-      setEditText(node.data.label || "");
+    if (node) {
+      switch (node.type) {
+        case "prompt":
+          setEditingNodeId(nodeId);
+          setEditText(node.data.label || "");
+          break;
+        case "response":
+          setNodes((prev) =>
+            prev.map((node) =>
+              node.id === nodeId
+                ? { ...node, data: { ...node.data, label: "thinking..." } }
+                : node,
+            ),
+          );
+
+          generateNextMessage(collectAncestors(nodeId, nodes, edges)).then(
+            (nextMsg) =>
+              setNodes((prev) =>
+                prev.map((node) =>
+                  node.id === nodeId
+                    ? { ...node, data: { ...node.data, label: nextMsg } } // WHY DOESN"T THIS WORK
+                    : node,
+                ),
+              ),
+          );
+          break;
+      }
     }
   };
 
   // Save edited text
   const saveEdit = () => {
     if (editingNodeId) {
-      setNodes(
-        nodes.map((node) =>
+      setNodes((prev) =>
+        prev.map((node) =>
           node.id === editingNodeId
             ? { ...node, data: { ...node.data, label: editText } }
             : node,
@@ -224,6 +251,7 @@ const AddNodeOnEdgeDrop = () => {
         onNodeClick={(event, node) => handleNodeClick(node.id)}
       >
         <Background />
+        <Controls />
       </ReactFlow>
 
       {/* Edit Modal */}
