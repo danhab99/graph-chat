@@ -63,3 +63,58 @@ export const getAncestors = (
   // Remove the starting node itself from ancestors
   return ancestors.filter(ancestor => ancestor.content !== "");
 };
+
+// Check if adding an edge would create a cycle
+export const wouldCreateCycle = (
+  edges: Edge[],
+  sourceId: string,
+  targetId: string,
+): boolean => {
+  // Build adjacency list for graph traversal
+  const adjacencyList: Record<string, string[]> = {};
+  // Initialize adjacency list with existing edges
+  edges.forEach((edge) => {
+    if (!adjacencyList[edge.source]) {
+      adjacencyList[edge.source] = [];
+    }
+    adjacencyList[edge.source].push(edge.target);
+  });
+  // Add the new edge temporarily for cycle detection
+  if (!adjacencyList[sourceId]) {
+    adjacencyList[sourceId] = [];
+  }
+  adjacencyList[sourceId].push(targetId);
+  // Check for cycles using DFS
+  const visited: Set<string> = new Set();
+  const recursionStack: Set<string> = new Set();
+  const hasCycle = (nodeId: string): boolean => {
+    if (!visited.has(nodeId)) {
+      visited.add(nodeId);
+      recursionStack.add(nodeId);
+      const neighbors = adjacencyList[nodeId] || [];
+      for (const neighbor of neighbors) {
+        if (!visited.has(neighbor) && hasCycle(neighbor)) {
+          return true;
+        } else if (recursionStack.has(neighbor)) {
+          return true;
+        }
+      }
+    }
+    recursionStack.delete(nodeId);
+    return false;
+  };
+  // Check if the new edge creates a cycle
+  const result = hasCycle(targetId);
+  // Clean up - remove the temporary edge
+  if (adjacencyList[sourceId]) {
+    adjacencyList[sourceId].pop();
+  }
+  return result;
+};
+
+export type NodeType = "prompt" | "response";
+
+// Node type mapping
+export const getOppositeNodeType = (nodeType: NodeType): NodeType => {
+  return nodeType === "prompt" ? "response" : "prompt";
+};

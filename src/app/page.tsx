@@ -9,110 +9,70 @@ import {
   useReactFlow,
   ReactFlowProvider,
   Node,
-  Edge,
   Connection,
   NodeChange,
   EdgeChange,
-  OnConnectEndParams,
   Controls,
+  OnConnectEnd,
+  Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { generateNextMessage } from "@/lib/ollama";
 import { collectAncestors } from "@/lib/collect_chat";
+import { getOppositeNodeType, NodeType, wouldCreateCycle } from "@/lib/node";
 
 // Define node types
-type NodeType = "prompt" | "response";
-const initialNodes: Node<any, NodeType>[] = [
-  {
-    id: "0",
-    type: "prompt",
-    data: { label: "Start Prompt" },
-    position: { x: 0, y: 50 },
-  },
-];
+const initialNodes: Node<any, NodeType>[] = [];
+
 let id = 1;
 const getId = () => `${id++}`;
 const nodeOrigin: [number, number] = [0.5, 0];
 
-// Node type mapping
-const getOppositeNodeType = (nodeType: NodeType): NodeType => {
-  return nodeType === "prompt" ? "response" : "prompt";
-};
-
-// Check if adding an edge would create a cycle
-const wouldCreateCycle = (
-  edges: Edge[],
-  sourceId: string,
-  targetId: string,
-): boolean => {
-  // Build adjacency list for graph traversal
-  const adjacencyList: Record<string, string[]> = {};
-  // Initialize adjacency list with existing edges
-  edges.forEach((edge) => {
-    if (!adjacencyList[edge.source]) {
-      adjacencyList[edge.source] = [];
-    }
-    adjacencyList[edge.source].push(edge.target);
-  });
-  // Add the new edge temporarily for cycle detection
-  if (!adjacencyList[sourceId]) {
-    adjacencyList[sourceId] = [];
-  }
-  adjacencyList[sourceId].push(targetId);
-  // Check for cycles using DFS
-  const visited: Set<string> = new Set();
-  const recursionStack: Set<string> = new Set();
-  const hasCycle = (nodeId: string): boolean => {
-    if (!visited.has(nodeId)) {
-      visited.add(nodeId);
-      recursionStack.add(nodeId);
-      const neighbors = adjacencyList[nodeId] || [];
-      for (const neighbor of neighbors) {
-        if (!visited.has(neighbor) && hasCycle(neighbor)) {
-          return true;
-        } else if (recursionStack.has(neighbor)) {
-          return true;
-        }
-      }
-    }
-    recursionStack.delete(nodeId);
-    return false;
-  };
-  // Check if the new edge creates a cycle
-  const result = hasCycle(targetId);
-  // Clean up - remove the temporary edge
-  if (adjacencyList[sourceId]) {
-    adjacencyList[sourceId].pop();
-  }
-  return result;
-};
-
 const AddNodeOnEdgeDrop = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<any, NodeType>>(
+    [],
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const { screenToFlowPosition } = useReactFlow();
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
 
+  const [loaded, setLoaded] = useState(false);
+
   useEffect(() => {
-    if (!nodes) {
-      const s = localStorage.getItem("nodes");
-      if (s) {
-        setNodes(JSON.parse(s));
-      }
-    } else {
+    if (nodes.length > 0) {
       localStorage.setItem("nodes", JSON.stringify(nodes));
+    } else if (!loaded) {
+      const s = localStorage.getItem("nodes");
+      if (s && s.length > 2) {
+        setNodes(JSON.parse(s));
+      } else {
+        setNodes([
+          {
+            id: "0",
+            type: "prompt",
+            data: { label: "Start Prompt" },
+            position: { x: 0, y: 50 },
+            width: 300,
+            resizing: true,
+          },
+        ]);
+      }
     }
-    if (!edges) {
+
+    if (edges.length > 0) {
+      localStorage.setItem("edges", JSON.stringify(edges));
+    } else if (!loaded) {
       const s = localStorage.getItem("edges");
-      if (s) {
+      if (s && s.length > 2) {
+        debugger;
         setEdges(JSON.parse(s));
       }
-    } else {
-      localStorage.setItem("edges", JSON.stringify(edges));
     }
-  }, [nodes, edges]);
+
+    setLoaded(true);
+  }, [nodes, edges, loaded]);
 
   // Handle direct connections between nodes
   const onConnect = useCallback(
@@ -130,11 +90,8 @@ const AddNodeOnEdgeDrop = () => {
   );
 
   // Handle dropping edges to create new nodes
-  const onConnectEnd = useCallback(
-    (
-      event: React.MouseEvent | React.TouchEvent,
-      connectionState: OnConnectEndParams,
-    ) => {
+  const onConnectEnd: OnConnectEnd = useCallback(
+    (event, connectionState) => {
       if (!connectionState.isValid) {
         const nodeId = getId();
         const { clientX, clientY } =
@@ -159,6 +116,7 @@ const AddNodeOnEdgeDrop = () => {
           },
           type: newNodeType,
           origin: nodeOrigin,
+          width: 300,
         };
         setNodes((nds) => nds.concat(newNode));
         if (connectionState.fromNode) {
@@ -166,8 +124,8 @@ const AddNodeOnEdgeDrop = () => {
           if (!wouldCreateCycle(edges, connectionState.fromNode.id, nodeId)) {
             setEdges((eds) =>
               eds.concat({
-                id: `${connectionState.fromNode.id}-${nodeId}`,
-                source: connectionState.fromNode.id,
+                id: `${connectionState.fromNode!.id}-${nodeId}`,
+                source: connectionState.fromNode!.id,
                 target: nodeId,
               }),
             );
@@ -249,6 +207,9 @@ const AddNodeOnEdgeDrop = () => {
         fitViewOptions={{ padding: 2 }}
         nodeOrigin={nodeOrigin}
         onNodeClick={(event, node) => handleNodeClick(node.id)}
+        onEdgeClick={(evt, edge) =>
+          setEdges((prev) => [...prev.filter((x) => x.id !== edge.id)])
+        }
       >
         <Background />
         <Controls />
