@@ -1,3 +1,4 @@
+"use client";
 import { Message } from "./node";
 
 /**
@@ -17,6 +18,7 @@ export const generateNextMessage = async (
   }));
 
   try {
+    console.log("fetch");
     const response = await fetch("http://localhost:11434/api/chat", {
       method: "POST",
       headers: {

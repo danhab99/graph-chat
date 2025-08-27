@@ -17,8 +17,6 @@ import {
   Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { generateNextMessage } from "@/lib/ollama";
-import { collectAncestors } from "@/lib/collect_chat";
 import { getOppositeNodeType, NodeType, wouldCreateCycle } from "@/lib/node";
 import { InputModalProvider } from "@/components/InputModal";
 import { InputNode } from "@/nodes/InputNode";
@@ -37,13 +35,6 @@ const AddNodeOnEdgeDrop = () => {
   const { screenToFlowPosition } = useReactFlow();
   const [loaded, setLoaded] = useState(false);
 
-  const setNodeLabel = (nodeId: Node["id"], label: string) =>
-    setNodes((prev) =>
-      prev.map((node) =>
-        node.id === nodeId ? { ...node, data: { ...node.data, label } } : node,
-      ),
-    );
-
   useEffect(() => {
     if (nodes.length > 0) {
       localStorage.setItem("nodes", JSON.stringify(nodes));
@@ -56,7 +47,7 @@ const AddNodeOnEdgeDrop = () => {
           {
             id: "0",
             type: "prompt",
-            data: { label: "Start Prompt" },
+            data: { label: "Click to enter first prompt" },
             position: { x: 0, y: 50 },
             width: 300,
             resizing: true,
@@ -143,28 +134,6 @@ const AddNodeOnEdgeDrop = () => {
     [screenToFlowPosition, edges],
   );
 
-  // Handle node click to open edit modal
-  const handleNodeClick = (nodeId: string) => {
-    const node = nodes.find((n) => n.id === nodeId);
-    if (node) {
-      switch (node.type) {
-        case "response":
-          setNodes((prev) =>
-            prev.map((node) =>
-              node.id === nodeId
-                ? { ...node, data: { ...node.data, label: "thinking..." } }
-                : node,
-            ),
-          );
-          setNodeLabel(node.id, "thinking...");
-          generateNextMessage(collectAncestors(nodeId, nodes, edges)).then(
-            (nextMsg) => setNodeLabel(node.id, nextMsg),
-          );
-          break;
-      }
-    }
-  };
-
   return (
     <InputModalProvider>
       <div className="wrapper w-screen h-screen" ref={reactFlowWrapper}>
@@ -178,7 +147,6 @@ const AddNodeOnEdgeDrop = () => {
           fitView
           fitViewOptions={{ padding: 2 }}
           nodeOrigin={nodeOrigin}
-          onNodeClick={(_event, node) => handleNodeClick(node.id)}
           onEdgeClick={(_event, edge) =>
             setEdges((prev) => [...prev.filter((x) => x.id !== edge.id)])
           }

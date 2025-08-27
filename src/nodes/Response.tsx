@@ -13,21 +13,25 @@ import { useEffect, useState } from "react";
 
 type ResponseNodeData = Node<
   {
-    system: string;
-    prompt: string;
-    response: string;
+    label: string;
   },
   "response"
 >;
 
 export function ResponseNode(props: NodeProps<ResponseNodeData>) {
   const { setNodes, getNodes, getEdges } = useReactFlow();
+  const [loading, setLoading] = useState(false);
 
   const run = () => {
-    const setNodeLabel = (nodeId: Node["id"], label: string) =>
+    if (loading) {
+      return;
+    }
+    setLoading(true);
+
+    const setNodeLabel = (label: string) =>
       setNodes((prev) =>
         prev.map((node) =>
-          node.id === nodeId
+          node.id === props.id
             ? { ...node, data: { ...node.data, label } }
             : node,
         ),
@@ -35,11 +39,15 @@ export function ResponseNode(props: NodeProps<ResponseNodeData>) {
 
     let i = 0;
     const interv = setInterval(() => {
-      let str = "   ";
-      str[i] = ".";
-      i = i > 3 ? i++ : 0;
-      setNodeLabel(props.id, `thinking${str}`);
-    }, 1000);
+      requestAnimationFrame(() => {
+        let str = new Array(3).fill(" ");
+        str[i++] = ".";
+        if (i > 3) {
+          i = 0;
+        }
+        setNodeLabel(`thinking${str.join(" ")}`);
+      });
+    }, 200);
 
     const nodes = getNodes();
     const edges = getEdges();
@@ -47,17 +55,25 @@ export function ResponseNode(props: NodeProps<ResponseNodeData>) {
     generateNextMessage(collectAncestors(props.id, nodes as any, edges)).then(
       (nextMsg) => {
         clearInterval(interv);
-        setNodeLabel(props.id, nextMsg);
+        setNodeLabel(nextMsg);
+        setLoading(false);
       },
     );
   };
 
   // AUTO RUN
   useEffect(() => {
-    run();
+    if (!props.data.label) {
+      run();
+    }
   }, []);
 
   return (
-    <CustomNode {...props} label="response" color="cyan" onClick={() => run} />
+    <CustomNode
+      {...props}
+      label="response"
+      color="cyan"
+      onClick={() => run()}
+    />
   );
 }
