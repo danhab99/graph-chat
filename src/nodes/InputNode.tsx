@@ -1,18 +1,8 @@
-import { CustomNode } from "@/components/CustomNode";
+import { CustomNode, CustomNodeData } from "@/components/CustomNode";
 import { useInput } from "@/components/InputModal";
-import {
-  Node,
-  NodeProps,
-} from "@xyflow/react";
+import { NodeProps } from "@xyflow/react";
 
-type InputNodeData = Node<
-  {
-    text: string;
-  },
-  "inputnode"
->;
-
-export function InputNode(props: NodeProps<InputNodeData>) {
+export function InputNode(props: NodeProps<CustomNodeData>) {
   const input = useInput();
 
   return (

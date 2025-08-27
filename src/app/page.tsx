@@ -28,6 +28,7 @@ const nodeOrigin: [number, number] = [0.5, 0];
 
 const AddNodeOnEdgeDrop = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<any, NodeType>>(
     [],
   );
@@ -66,7 +67,7 @@ const AddNodeOnEdgeDrop = () => {
     }
 
     setLoaded(true);
-  }, [nodes, edges, loaded]);
+  }, [nodes, edges, loaded, setEdges, setNodes]);
 
   // Handle direct connections between nodes
   const onConnect = useCallback(
@@ -80,7 +81,7 @@ const AddNodeOnEdgeDrop = () => {
       }
       setEdges((eds) => addEdge(params, eds));
     },
-    [edges],
+    [edges, setEdges],
   );
 
   // Handle dropping edges to create new nodes
@@ -98,21 +99,27 @@ const AddNodeOnEdgeDrop = () => {
             connectionState.fromNode.type as NodeType,
           );
         }
-        const newNode: Node = {
-          id: nodeId,
-          position: screenToFlowPosition({
-            x: clientX,
-            y: clientY,
-          }),
-          data: {
-            label: newNodeType === "prompt" ? "Click to enter prompt" : "Response",
-            type: newNodeType,
-          },
-          type: newNodeType,
-          origin: nodeOrigin,
-          width: 300,
-        };
-        setNodes((nds) => nds.concat(newNode));
+        setNodes((nds) =>
+          nds.concat([
+            {
+              id: nodeId,
+              position: screenToFlowPosition({
+                x: clientX,
+                y: clientY,
+              }),
+              data: {
+                label:
+                  newNodeType === "prompt"
+                    ? "Click to enter prompt"
+                    : "Response",
+                type: newNodeType,
+              },
+              type: newNodeType,
+              origin: nodeOrigin,
+              width: 300,
+            },
+          ]),
+        );
         if (connectionState.fromNode) {
           // Check if this connection would create a cycle
           if (!wouldCreateCycle(edges, connectionState.fromNode.id, nodeId)) {
@@ -131,12 +138,12 @@ const AddNodeOnEdgeDrop = () => {
         }
       }
     },
-    [screenToFlowPosition, edges],
+    [screenToFlowPosition, edges, setEdges, setNodes],
   );
 
   return (
     <InputModalProvider>
-      <div className="wrapper w-screen h-screen" ref={reactFlowWrapper}>
+      <div className="w-screen h-screen wrapper" ref={reactFlowWrapper}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -173,6 +180,7 @@ const AddNodeOnEdgeDrop = () => {
   );
 };
 
+// eslint-disable-next-line import/no-anonymous-default-export, react/display-name
 export default () => (
   <ReactFlowProvider>
     <AddNodeOnEdgeDrop />

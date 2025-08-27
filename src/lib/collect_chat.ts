@@ -1,35 +1,9 @@
+import { Edge, Node } from "@xyflow/react";
+
 /**
  * Type definition for a node in the graph
  */
 type NodeType = "prompt" | "response";
-
-/**
- * Type definition for a node data object
- */
-interface NodeData {
-  label: string;
-  type?: NodeType;
-}
-
-/**
- * Type definition for a node in the graph
- */
-interface GraphNode {
-  id: string;
-  type: NodeType;
-  data: NodeData;
-  position: { x: number; y: number };
-  origin?: [number, number];
-}
-
-/**
- * Type definition for an edge in the graph
- */
-interface GraphEdge {
-  id: string;
-  source: string;
-  target: string;
-}
 
 /**
  * Type definition for ancestor object
@@ -48,12 +22,12 @@ interface Ancestor {
  */
 export const collectAncestors = (
   nodeId: string,
-  nodes: GraphNode[],
-  edges: GraphEdge[]
+  nodes: Node[],
+  edges: Edge[],
 ): Ancestor[] => {
   // Build a mapping from target node to source nodes (reverse edges)
   const reverseEdges: Record<string, string[]> = {};
-  edges.forEach(edge => {
+  edges.forEach((edge) => {
     if (!reverseEdges[edge.target]) {
       reverseEdges[edge.target] = [];
     }
@@ -67,23 +41,24 @@ export const collectAncestors = (
 
   while (queue.length > 0) {
     const currentId = queue.shift()!;
-    
+
     // Skip if already visited or not in nodes
-    if (visited.has(currentId) || !nodes.find(n => n.id === currentId)) {
+    if (visited.has(currentId) || !nodes.find((n) => n.id === currentId)) {
       continue;
     }
-    
+
     visited.add(currentId);
-    
+
     // Get the node data
-    const node = nodes.find(n => n.id === currentId);
+    const node = nodes.find((n) => n.id === currentId);
     if (node) {
       // Determine role based on node type
-      const role: "user" | "assistant" = node.type === "prompt" ? "user" : "assistant";
-      const content = node.data.label || "";
-      
+      const role: "user" | "assistant" =
+        node.type === "prompt" ? "user" : "assistant";
+      const content = (node.data.label as string) || "";
+
       ancestors.push({ role, content });
-      
+
       // Add parents to queue for further traversal
       if (reverseEdges[currentId]) {
         queue.push(...reverseEdges[currentId]);
@@ -92,5 +67,8 @@ export const collectAncestors = (
   }
 
   // Remove the target node itself and return in correct order (from closest to farthest)
-  return ancestors.filter(ancestor => ancestor.content !== "").reverse().slice(0, -1);
+  return ancestors
+    .filter((ancestor) => ancestor.content !== "")
+    .reverse()
+    .slice(0, -1);
 };

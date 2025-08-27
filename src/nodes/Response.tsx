@@ -1,24 +1,13 @@
-import { CustomNode } from "@/components/CustomNode";
+import { CustomNode, CustomNodeData } from "@/components/CustomNode";
 import { collectAncestors } from "@/lib/collect_chat";
 import { generateNextMessage } from "@/lib/ollama";
 import {
-  Handle,
-  Node,
   NodeProps,
-  NodeResizer,
-  Position,
   useReactFlow,
 } from "@xyflow/react";
 import { useEffect, useState } from "react";
 
-type ResponseNodeData = Node<
-  {
-    label: string;
-  },
-  "response"
->;
-
-export function ResponseNode(props: NodeProps<ResponseNodeData>) {
+export function ResponseNode(props: NodeProps<CustomNodeData>) {
   const { setNodes, getNodes, getEdges } = useReactFlow();
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +29,7 @@ export function ResponseNode(props: NodeProps<ResponseNodeData>) {
     let i = 0;
     const interv = setInterval(() => {
       requestAnimationFrame(() => {
-        let str = new Array(3).fill(" ");
+        const str = new Array(3).fill(" ");
         str[i++] = ".";
         if (i > 3) {
           i = 0;
@@ -52,7 +41,7 @@ export function ResponseNode(props: NodeProps<ResponseNodeData>) {
     const nodes = getNodes();
     const edges = getEdges();
 
-    generateNextMessage(collectAncestors(props.id, nodes as any, edges)).then(
+    generateNextMessage(collectAncestors(props.id, nodes, edges)).then(
       (nextMsg) => {
         clearInterval(interv);
         setNodeLabel(nextMsg);
