@@ -15,6 +15,9 @@ export function InputNode(props: NodeProps<CustomNodeData>) {
           input(props.id);
         },
       }}
+      onDoubleClick={() => {
+        input(props.id);
+      }}
     />
   );
 }

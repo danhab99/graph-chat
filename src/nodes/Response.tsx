@@ -66,6 +66,7 @@ export function ResponseNode(props: NodeProps<CustomNodeData>) {
           alert("Copied to clipboard!");
         },
       }}
+      onDoubleClick={() => run()}
     />
   );
 }

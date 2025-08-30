@@ -14,6 +14,7 @@ export type CustomNodeProps = {
   label: string;
   color: string;
   onClick?: () => void;
+  onDoubleClick?: () => void;
   controls?: Record<
     string,
     (
@@ -40,6 +41,7 @@ export function CustomNode(props: CustomNodeProps) {
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
       onClick={props.onClick}
+      onDoubleClick={props.onDoubleClick}
     >
       <span className="p-0 text-xs leading-none text-gray-500">
         {props.label}:
