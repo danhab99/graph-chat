@@ -49,6 +49,7 @@ export const MyReactFlow = () => {
             data: { label: "Click to enter first prompt" },
             position: { x: 0, y: 50 },
             width: 300,
+            height: 200,
             resizing: true,
           },
         ]);
@@ -109,12 +110,13 @@ export const MyReactFlow = () => {
                 label:
                   newNodeType === "prompt"
                     ? "Click to enter prompt"
-                    : "Response",
+                    : "Click to generate response",
                 type: newNodeType,
               },
               type: newNodeType,
               origin: nodeOrigin,
               width: 300,
+              height: 200,
             },
           ]),
         );
