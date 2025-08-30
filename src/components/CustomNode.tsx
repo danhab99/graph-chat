@@ -1,5 +1,6 @@
 import { Handle, Node, NodeProps, NodeResizer, Position } from "@xyflow/react";
 import { useState } from "react";
+import Markdown from "react-markdown";
 
 export type CustomNodeProps = {
   label: string;
@@ -28,7 +29,7 @@ export function CustomNode(props: CustomNodeProps) {
         {props.label}:
       </span>
       <NodeResizer isVisible={hovering} />
-      <p>{props.data?.label}</p>
+      <Markdown>{props.data?.label}</Markdown>
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
     </div>
