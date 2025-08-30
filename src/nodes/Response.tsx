@@ -1,10 +1,7 @@
 import { CustomNode, CustomNodeData } from "@/components/CustomNode";
 import { collectAncestors } from "@/lib/collect_chat";
 import { generateNextMessage } from "@/lib/ollama";
-import {
-  NodeProps,
-  useReactFlow,
-} from "@xyflow/react";
+import { NodeProps, useReactFlow } from "@xyflow/react";
 import { useEffect, useState } from "react";
 
 export function ResponseNode(props: NodeProps<CustomNodeData>) {
@@ -62,7 +59,13 @@ export function ResponseNode(props: NodeProps<CustomNodeData>) {
       {...props}
       label="response"
       color="cyan"
-      onClick={() => run()}
+      controls={{
+        generate: () => run(),
+        copy: () => {
+          navigator.clipboard.writeText(props.data.label || "");
+          alert("Copied to clipboard!");
+        },
+      }}
     />
   );
 }

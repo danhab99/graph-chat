@@ -9,8 +9,12 @@ export function InputNode(props: NodeProps<CustomNodeData>) {
     <CustomNode
       {...props}
       color="yellow"
-      onClick={() => input(props.id)}
       label="prompt"
+      controls={{
+        edit: () => {
+          input(props.id);
+        },
+      }}
     />
   );
 }

@@ -1,11 +1,26 @@
-import { Handle, Node, NodeProps, NodeResizer, Position } from "@xyflow/react";
-import { useState } from "react";
+import {
+  Handle,
+  Node,
+  NodeProps,
+  NodeResizer,
+  NodeToolbar,
+  Position,
+  useReactFlow,
+} from "@xyflow/react";
+import { MouseEvent, useState } from "react";
 import Markdown from "react-markdown";
 
 export type CustomNodeProps = {
   label: string;
   color: string;
-  onClick: () => void;
+  onClick?: () => void;
+  controls?: Record<
+    string,
+    (
+      props: CustomNodeProps,
+      e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>,
+    ) => void
+  >;
 } & NodeProps<CustomNodeData>;
 
 export type CustomNodeData = Node<
@@ -17,6 +32,7 @@ export type CustomNodeData = Node<
 
 export function CustomNode(props: CustomNodeProps) {
   const [hovering, setHovering] = useState(false);
+  const { setNodes } = useReactFlow();
 
   return (
     <div
@@ -32,6 +48,32 @@ export function CustomNode(props: CustomNodeProps) {
       <Markdown>{props.data?.label}</Markdown>
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
+      <NodeToolbar position={Position.Bottom}>
+        {props.controls
+          ? Object.entries(props.controls)
+              .concat([
+                [
+                  "delete",
+                  () => {
+                    setNodes((prev) =>
+                      prev.filter((node) => node.id !== props.id),
+                    );
+                  },
+                ],
+              ])
+              .map(([label, onClick], i) => (
+                <button
+                  className="px-4 py-2 mx-2 rounded-lg shadow-lg"
+                  style={{
+                    backgroundColor: `hsl(${(((i + 7) * 5) % 16) * 22.5}, 100%, 80%)`,
+                  }}
+                  onClick={(e) => onClick(props, e)}
+                >
+                  {label}
+                </button>
+              ))
+          : null}
+      </NodeToolbar>
     </div>
   );
 }
