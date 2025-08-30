@@ -19,7 +19,7 @@ export function CustomNode(props: CustomNodeProps) {
 
   return (
     <div
-      className={`${props.color === "yellow" ? "bg-yellow-200" : ""} ${props.color === "cyan" ? "bg-cyan-200" : ""} rounded-lg h-full shadow-md overflow-y-auto px-2 pb-2 text-black`}
+      className={`${props.color === "yellow" ? "bg-yellow-200" : ""} ${props.color === "cyan" ? "bg-cyan-200" : ""} rounded-lg h-full shadow-md overflow-y-auto px-2 pb-2 text-black scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-slate-500 scrollbar-track-transparent`}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
       onClick={props.onClick}
