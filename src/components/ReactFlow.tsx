@@ -46,7 +46,7 @@ export const MyReactFlow = () => {
           {
             id: "0",
             type: "prompt",
-            data: { label: "Click to enter first prompt" },
+            data: { label: "Double-click to enter first prompt" },
             position: { x: 0, y: 50 },
             width: 300,
             height: 200,
@@ -109,8 +109,8 @@ export const MyReactFlow = () => {
               data: {
                 label:
                   newNodeType === "prompt"
-                    ? "Click to enter prompt"
-                    : "Click to generate response",
+                    ? "Double-click to enter prompt"
+                    : "Double-click to generate response",
                 type: newNodeType,
               },
               type: newNodeType,
