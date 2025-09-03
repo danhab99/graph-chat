@@ -8,7 +8,6 @@ export function InputNode(props: NodeProps<CustomNodeData>) {
   return (
     <CustomNode
       {...props}
-      color="yellow"
       label="prompt"
       controls={{
         edit: () => {
@@ -18,6 +17,7 @@ export function InputNode(props: NodeProps<CustomNodeData>) {
       onDoubleClick={() => {
         input(props.id);
       }}
+      colorIndex={0}
     />
   );
 }

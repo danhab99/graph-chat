@@ -1,3 +1,4 @@
+import { calculateColor } from "@/lib/color";
 import {
   Handle,
   Node,
@@ -12,7 +13,7 @@ import Markdown from "react-markdown";
 
 export type CustomNodeProps = {
   label: string;
-  color: string;
+  colorIndex: number;
   onClick?: () => void;
   onDoubleClick?: () => void;
   controls?: Record<
@@ -37,7 +38,10 @@ export function CustomNode(props: CustomNodeProps) {
 
   return (
     <div
-      className={`${props.color === "yellow" ? "bg-yellow-200" : ""} ${props.color === "cyan" ? "bg-cyan-200" : ""} rounded-lg h-full shadow-md overflow-y-auto px-2 pb-2 text-black scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-slate-500 scrollbar-track-transparent`}
+      className={`rounded-lg h-full shadow-md overflow-y-auto px-2 pb-2 text-black scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-slate-500 scrollbar-track-transparent`}
+      style={{
+        backgroundColor: calculateColor(props.colorIndex),
+      }}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
       onClick={props.onClick}
@@ -67,7 +71,7 @@ export function CustomNode(props: CustomNodeProps) {
                 <button
                   className="px-4 py-2 mx-2 rounded-lg shadow-lg"
                   style={{
-                    backgroundColor: `hsl(${(((i + 7) * 5) % 16) * 22.5}, 100%, 80%)`,
+                    backgroundColor: calculateColor(i),
                   }}
                   onClick={(e) => onClick(props, e)}
                 >

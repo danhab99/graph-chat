@@ -58,7 +58,6 @@ export function ResponseNode(props: NodeProps<CustomNodeData>) {
     <CustomNode
       {...props}
       label="response"
-      color="cyan"
       controls={{
         generate: () => run(),
         copy: () => {
@@ -67,6 +66,7 @@ export function ResponseNode(props: NodeProps<CustomNodeData>) {
         },
       }}
       onDoubleClick={() => run()}
+      colorIndex={1}
     />
   );
 }
