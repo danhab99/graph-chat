@@ -170,8 +170,10 @@ export const MyReactFlow = () => {
           prompt: InputNode,
           response: ResponseNode,
         }}
+        snapToGrid
+        snapGrid={[20, 20]}
       >
-        <Background />
+        <Background gap={[20, 20]} />
         <Controls />
       </ReactFlow>
     </div>
