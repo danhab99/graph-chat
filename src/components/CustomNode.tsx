@@ -69,6 +69,7 @@ export function CustomNode(props: CustomNodeProps) {
               ])
               .map(([label, onClick], i) => (
                 <button
+                  key={i}
                   className="px-4 py-2 mx-2 rounded-lg shadow-lg"
                   style={{
                     backgroundColor: calculateColor(i),
