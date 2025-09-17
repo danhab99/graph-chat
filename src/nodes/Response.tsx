@@ -64,7 +64,7 @@ export function ResponseNode(props: NodeProps<CustomNodeData>) {
     <CustomNode
       {...props}
       label={
-        lastModelToGenerate ? `${lastModelToGenerate} responded:` : "response"
+        lastModelToGenerate ? `${lastModelToGenerate} wrote back` : "response"
       }
       controls={{
         generate: () => run(),
