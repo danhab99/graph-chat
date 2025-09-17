@@ -43,15 +43,14 @@ export function ResponseNode(props: NodeProps<CustomNodeData>) {
     const edges = getEdges();
 
     setLastModelToGenerate(selectedModel);
-    generateNextMessage(
-      collectAncestors(props.id, nodes, edges),
-      selectedModel,
-    ).then((nextMsg) => {
-      setNodeLabel(nextMsg);
-    }).finally(() => {
-      clearInterval(interv);
-      setLoading(false);
-    })
+    generateNextMessage(collectAncestors(props.id, nodes, edges), selectedModel)
+      .then((nextMsg) => {
+        setNodeLabel(nextMsg);
+      })
+      .finally(() => {
+        clearInterval(interv);
+        setLoading(false);
+      });
   };
 
   // AUTO RUN
@@ -64,7 +63,9 @@ export function ResponseNode(props: NodeProps<CustomNodeData>) {
   return (
     <CustomNode
       {...props}
-      label={`response(${lastModelToGenerate})`}
+      label={
+        lastModelToGenerate ? `${lastModelToGenerate} responded:` : "response"
+      }
       controls={{
         generate: () => run(),
         copy: () => {
