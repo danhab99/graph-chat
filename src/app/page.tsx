@@ -9,7 +9,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 const AddNodeOnEdgeDrop = () => {
   return (
     <InputModalProvider>
-      <SidebarTrigger />
       <div className="w-screen h-screen wrapper">
         <MyReactFlow />
       </div>

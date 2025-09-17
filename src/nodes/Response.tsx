@@ -1,4 +1,5 @@
 import { CustomNode, CustomNodeData } from "@/components/CustomNode";
+import { useSelectedModel } from "@/hooks/useModelState";
 import { collectAncestors } from "@/lib/collect_chat";
 import { generateNextMessage } from "@/lib/ollama";
 import { NodeProps, useReactFlow } from "@xyflow/react";
@@ -7,6 +8,9 @@ import { useEffect, useState } from "react";
 export function ResponseNode(props: NodeProps<CustomNodeData>) {
   const { setNodes, getNodes, getEdges } = useReactFlow();
   const [loading, setLoading] = useState(false);
+
+  const [selectedModel] = useSelectedModel();
+  const [lastModelToGenerate, setLastModelToGenerate] = useState("");
 
   const run = () => {
     if (loading) {
@@ -38,13 +42,16 @@ export function ResponseNode(props: NodeProps<CustomNodeData>) {
     const nodes = getNodes();
     const edges = getEdges();
 
-    generateNextMessage(collectAncestors(props.id, nodes, edges)).then(
-      (nextMsg) => {
-        clearInterval(interv);
-        setNodeLabel(nextMsg);
-        setLoading(false);
-      },
-    );
+    setLastModelToGenerate(selectedModel);
+    generateNextMessage(
+      collectAncestors(props.id, nodes, edges),
+      selectedModel,
+    ).then((nextMsg) => {
+      setNodeLabel(nextMsg);
+    }).finally(() => {
+      clearInterval(interv);
+      setLoading(false);
+    })
   };
 
   // AUTO RUN
@@ -57,7 +64,7 @@ export function ResponseNode(props: NodeProps<CustomNodeData>) {
   return (
     <CustomNode
       {...props}
-      label="response"
+      label={`response(${lastModelToGenerate})`}
       controls={{
         generate: () => run(),
         copy: () => {

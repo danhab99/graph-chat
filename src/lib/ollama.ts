@@ -42,3 +42,26 @@ export const generateNextMessage = async (
     throw new Error("Failed to generate response from Ollama");
   }
 };
+
+/**
+ * Retrieves the list of available models from the Ollama server.
+ * @returns A Promise resolving to an array of strings representing available models.
+ */
+export const listModels = async (): Promise<string[]> => {
+  try {
+    const response = await fetch("http://localhost:11434/api/tags", {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch models: ${response.status}`);
+    }
+
+    const data = await response.json();
+    // Extract model names from the response
+    return data.models.map((model: any) => model.name);
+  } catch (error) {
+    console.error("Error fetching models:", error);
+    throw new Error("Failed to retrieve available models from Ollama");
+  }
+};

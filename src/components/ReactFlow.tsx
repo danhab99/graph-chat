@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { use, useCallback, useEffect, useRef, useState } from "react";
 import {
   Background,
   ReactFlow,
@@ -14,11 +14,19 @@ import {
   Controls,
   OnConnectEnd,
   Edge,
+  Panel,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { getOppositeNodeType, NodeType, wouldCreateCycle } from "@/lib/node";
 import { InputNode } from "@/nodes/InputNode";
 import { ResponseNode } from "@/nodes/Response";
+import { Button } from "./ui/button";
+import { calculateColor } from "@/lib/color";
+import { Select } from "@radix-ui/react-select";
+import AiModelSelector from "./ui/selectors/AiModelSelector";
+import { listModels } from "@/lib/ollama";
+import { useSelectedModel } from "@/hooks/useModelState";
+import { useAsync } from "react-use";
 
 let id = 1;
 const getId = () => `${id++}`;
@@ -141,6 +149,14 @@ export const MyReactFlow = () => {
     [screenToFlowPosition, edges, setEdges, setNodes],
   );
 
+  const models = useAsync(listModels, []);
+  const [selectedModel, setSelectedModel] = useSelectedModel();
+  useEffect(() => {
+    if (models.value){
+      setSelectedModel(models.value[0]);
+    }
+  }, [models]);
+
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
       <ReactFlow
@@ -175,6 +191,38 @@ export const MyReactFlow = () => {
       >
         <Background gap={[20, 20]} />
         <Controls />
+        <Panel>
+          <div className="flex-col p-4 rounded-lg shadow-md bg-gray-50 gap-2">
+            <h4>Controls</h4>
+
+            <Button
+              className="text-black"
+              style={{ backgroundColor: calculateColor(0) }}
+              onClick={() => {
+                setNodes((prev) => [
+                  ...prev,
+                  {
+                    id: getId(),
+                    type: "prompt",
+                    data: { label: "Double-click to enter prompt" },
+                    position: { x: 0, y: 50 },
+                    width: 300,
+                    height: 200,
+                    resizing: true,
+                  },
+                ]);
+              }}
+            >
+              Add new Prompt Node
+            </Button>
+
+            <AiModelSelector
+              models={models.value ?? []}
+              onChange={setSelectedModel}
+              value={selectedModel}
+            />
+          </div>
+        </Panel>
       </ReactFlow>
     </div>
   );
